@@ -1,5 +1,13 @@
 require 'spec_helper'
 
+RSpec::Mocks::Space.class_eval do
+  # Deal with the fact that #mocks was renamed to #receivers for RSpec 2.9:
+  # https://github.com/rspec/rspec-mocks/commit/17c259ea5143d309e90ca6d53d40f6356ac2d0a5
+  unless private_instance_methods.include?(:receivers)
+    alias_method :receivers, :mocks
+  end
+end
+
 module TestMethods
   def defined_method
     raise "Y U NO MOCK?"
@@ -252,7 +260,7 @@ shared_examples_for "unloaded constant stubbing" do |const_name|
   it 'does not remove the constant when the example manually sets it' do
     begin
       stub_const(const_name, 7)
-      stubber = RSpec::Mocks.space.send(:mocks).first
+      stubber = RSpec::Mocks.space.send(:receivers).first
       change_const_value_to(new_const_value = Object.new)
       reset_rspec_mocks
       const.should equal(new_const_value)
